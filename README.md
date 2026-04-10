@@ -67,26 +67,37 @@ MeetingCrew/
 - macOS 14 이상 · Xcode 15 이상
 - Anthropic Console에서 발급한 Claude API Key
 
-### 0. 초보자용 — 터미널 한 줄로 실행 (Xcode GUI 불필요)
+### 0. 🅰️ Mac 앱으로 바로 실행 (권장)
 
-clone 하고 **딱 한 줄**이면 앱이 뜹니다. Xcode를 켤 필요도 없어요.
+macOS에는 "시뮬레이터"가 없습니다. Mac 앱은 사용자님의 Mac 위에서
+**네이티브 앱**으로 그대로 돌아갑니다. clone 하고 **딱 한 줄**이면 됩니다.
 
-**🅰️ Mac 앱으로 바로 실행:**
 ```bash
 git clone <repo>
 cd MeetingMind
 ./scripts/run-mac.sh
 ```
 
-**🅱️ iPhone Simulator에서 실행:**
+스크립트가 하는 일:
+1. 기존에 실행 중인 MeetingCrew가 있으면 종료
+2. `xcodebuild`로 ad-hoc 서명하여 빌드 (개발팀 불필요)
+3. 빌드된 `.app` 번들에서 quarantine 플래그 제거
+4. `open -n`으로 새 인스턴스 실행 + 앞으로 activate
+
+옵션:
 ```bash
-./scripts/run-ios.sh               # 기본 기기 자동 선택
-./scripts/run-ios.sh "iPhone 16"   # 특정 기기 지정
+./scripts/run-mac.sh --clean        # DerivedData 완전 삭제 후 재빌드
+./scripts/run-mac.sh --build-only   # 빌드만 하고 실행은 생략
 ```
 
-각 스크립트가 하는 일:
-- `run-mac.sh`: ad-hoc 서명으로 빌드 → 완성된 `.app` 번들 탐색 → `open`으로 실행
-- `run-ios.sh`: 사용 가능한 iPhone 시뮬레이터 자동 탐색 → 부팅 → 빌드 → 설치 → 실행
+### 0. 🅱️ iPhone Simulator에서 실행 (선택)
+
+```bash
+./scripts/run-ios.sh                  # 기본 기기 자동 선택
+./scripts/run-ios.sh "iPhone 17 Pro"  # 특정 기기 지정
+```
+
+이미 부팅된 시뮬레이터가 있으면 그것을 우선 사용합니다.
 
 ### 1. 환경 사전 점검 (최초 1회)
 
