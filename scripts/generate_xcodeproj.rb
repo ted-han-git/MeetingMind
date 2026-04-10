@@ -92,7 +92,8 @@ common = {
   'INFOPLIST_KEY_LSApplicationCategoryType'        => 'public.app-category.productivity',
   'INFOPLIST_KEY_NSHumanReadableCopyright'         => '',
   'CODE_SIGN_ENTITLEMENTS'                         => 'MeetingCrew/Resources/MeetingCrew.entitlements',
-  'CODE_SIGN_STYLE'                                => 'Automatic',
+  'CODE_SIGN_IDENTITY'                             => '-',
+  'CODE_SIGN_STYLE'                                => 'Manual',
   'DEVELOPMENT_TEAM'                               => '',
   'IPHONEOS_DEPLOYMENT_TARGET'                     => '17.0',
   'MACOSX_DEPLOYMENT_TARGET'                       => '14.0',
@@ -103,7 +104,7 @@ common = {
   'TARGETED_DEVICE_FAMILY'                         => '1,2',
   'ASSETCATALOG_COMPILER_APPICON_NAME'             => 'AppIcon',
   'ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME' => 'AccentColor',
-  'ENABLE_HARDENED_RUNTIME'                        => 'YES',
+  'ENABLE_HARDENED_RUNTIME'                        => 'NO',
   'ENABLE_PREVIEWS'                                => 'YES',
   'LD_RUNPATH_SEARCH_PATHS'                        => [
     '$(inherited)',
@@ -112,7 +113,7 @@ common = {
   ],
   'SWIFT_EMIT_LOC_STRINGS'                         => 'YES',
   'CLANG_ENABLE_MODULES'                           => 'YES',
-  'ENABLE_USER_SCRIPT_SANDBOXING'                  => 'YES'
+  'ENABLE_USER_SCRIPT_SANDBOXING'                  => 'NO'
 }
 
 target.build_configurations.each do |config|
