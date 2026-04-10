@@ -67,9 +67,28 @@ MeetingCrew/
 - macOS 14 이상 · Xcode 15 이상
 - Anthropic Console에서 발급한 Claude API Key
 
-### 1. 바로 열어서 실행
+### 0. 원클릭 셋업 (권장)
 
-이 저장소에는 `MeetingCrew.xcodeproj`가 **이미 포함**되어 있습니다. 그냥 여세요:
+clone 한 뒤 한 번만 실행하면 서명 자동 감지 + iOS/macOS 스모크 빌드까지 끝납니다.
+
+```bash
+git clone <repo>
+cd MeetingMind
+./scripts/setup-mac.sh
+```
+
+스크립트가 하는 일:
+1. Xcode Command Line Tools 확인
+2. 키체인에서 Development Team 자동 감지 → `.local/LocalSigning.xcconfig`에 저장
+3. `xcodebuild -list`로 프로젝트 구조 검증
+4. iOS Simulator 타겟 Debug 빌드 (code signing 비활성화)
+5. My Mac 타겟 Debug 빌드
+
+완료 후 `open MeetingCrew.xcodeproj` 로 Xcode에 열고 ⌘R 누르면 됩니다.
+
+### 1. (또는) 바로 열어서 실행
+
+셋업 스크립트 없이 그냥 열어도 됩니다. 저장소에 `MeetingCrew.xcodeproj`가 포함되어 있습니다.
 
 ```bash
 git clone <repo>
