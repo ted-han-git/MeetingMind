@@ -70,8 +70,14 @@ fi
 log "Building $APP_NAME for My Mac (ad-hoc signing)..."
 # ad-hoc 서명("-")으로 빌드하면 개발팀 없이도 로컬 실행이 가능합니다.
 # App Sandbox + 엔타이틀먼트는 유효한 서명(ad-hoc 포함)이 있어야 작동합니다.
+# Hardened Runtime은 ad-hoc + 일부 엔타이틀먼트에서 CodeSign 실패를 유발하므로 끕니다.
 BUILD_LOG="build/run-mac-last.log"
 mkdir -p build
+
+# 혹시 남아있는 .DS_Store / resource fork 잔재 정리 (CodeSign 실패 원인)
+find "$DERIVED" -name ".DS_Store" -delete 2>/dev/null || true
+find MeetingCrew -name ".DS_Store" -delete 2>/dev/null || true
+xattr -cr MeetingCrew 2>/dev/null || true
 
 set +e
 xcodebuild \
@@ -84,6 +90,8 @@ xcodebuild \
   CODE_SIGN_STYLE=Manual \
   CODE_SIGNING_REQUIRED=YES \
   CODE_SIGNING_ALLOWED=YES \
+  ENABLE_HARDENED_RUNTIME=NO \
+  OTHER_CODE_SIGN_FLAGS="--timestamp=none" \
   build 2>&1 | tee "$BUILD_LOG" \
   | (command -v xcpretty >/dev/null 2>&1 && xcpretty || cat)
 
