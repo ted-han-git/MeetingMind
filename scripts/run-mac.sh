@@ -66,18 +66,21 @@ if [ "$CLEAN" -eq 1 ]; then
   ok "Cleaned"
 fi
 
-# ---------- 4. 빌드 ----------
-log "Building $APP_NAME for My Mac (ad-hoc signing)..."
-# ad-hoc 서명("-")으로 빌드하면 개발팀 없이도 로컬 실행이 가능합니다.
-# App Sandbox + 엔타이틀먼트는 유효한 서명(ad-hoc 포함)이 있어야 작동합니다.
-# Hardened Runtime은 ad-hoc + 일부 엔타이틀먼트에서 CodeSign 실패를 유발하므로 끕니다.
+# ---------- 4. 빌드 (서명 없이) ----------
+# 빌드와 서명을 분리하는 이유:
+# iCloud Drive나 Finder가 붙이는 xattr (com.apple.FinderInfo, quarantine 등)
+# 때문에 codesign이 "resource fork, Finder information, or similar detritus
+# not allowed" 에러로 실패하는 경우가 잦음. 빌드를 서명 없이 끝낸 뒤 .app
+# 번들을 xattr -cr로 완전히 정리한 후, 우리가 직접 codesign을 호출하면
+# 확실하게 깨끗한 상태에서 서명할 수 있음.
+log "Building $APP_NAME for My Mac (unsigned, will sign manually)..."
 BUILD_LOG="build/run-mac-last.log"
 mkdir -p build
 
-# 혹시 남아있는 .DS_Store / resource fork 잔재 정리 (CodeSign 실패 원인)
-find "$DERIVED" -name ".DS_Store" -delete 2>/dev/null || true
+# 소스 트리에 붙어있을 수 있는 xattr/잔재 정리 (빌드 입력 단계 방지)
 find MeetingCrew -name ".DS_Store" -delete 2>/dev/null || true
 xattr -cr MeetingCrew 2>/dev/null || true
+xattr -cr "$PROJECT" 2>/dev/null || true
 
 set +e
 xcodebuild \
@@ -86,12 +89,12 @@ xcodebuild \
   -configuration Debug \
   -destination "generic/platform=macOS" \
   -derivedDataPath "$DERIVED" \
-  CODE_SIGN_IDENTITY="-" \
+  CODE_SIGNING_ALLOWED=NO \
+  CODE_SIGNING_REQUIRED=NO \
+  CODE_SIGN_IDENTITY="" \
   CODE_SIGN_STYLE=Manual \
-  CODE_SIGNING_REQUIRED=YES \
-  CODE_SIGNING_ALLOWED=YES \
   ENABLE_HARDENED_RUNTIME=NO \
-  OTHER_CODE_SIGN_FLAGS="--timestamp=none" \
+  ENABLE_USER_SCRIPT_SANDBOXING=NO \
   build 2>&1 | tee "$BUILD_LOG" \
   | (command -v xcpretty >/dev/null 2>&1 && xcpretty || cat)
 
@@ -102,19 +105,43 @@ if [ "$PIPE_RC" -ne 0 ]; then
   echo
   die "빌드 실패 (xcodebuild exit $PIPE_RC). 전체 로그: $BUILD_LOG"
 fi
-ok "Build succeeded"
+ok "Build succeeded (unsigned)"
 
 # ---------- 5. .app 번들 찾기 ----------
 APP=$(find "$DERIVED/Build/Products" -type d -name "${APP_NAME}.app" -path "*Debug*" 2>/dev/null | head -1)
 [ -n "$APP" ] || die "빌드 결과물(.app)을 찾지 못했습니다. 로그 확인: $BUILD_LOG"
 ok "Built: $APP"
 
-# ---------- 6. quarantine 플래그 제거 ----------
-# ad-hoc 서명된 바이너리에 quarantine 속성이 붙어있으면 Gatekeeper가 막을 수 있음
-if xattr -p com.apple.quarantine "$APP" >/dev/null 2>&1; then
-  log "Removing quarantine flag..."
-  xattr -cr "$APP" 2>/dev/null || true
-  ok "Quarantine removed"
+# ---------- 6. .app 번들 완전 청소 (xattr + 찌꺼기) ----------
+log "Cleaning extended attributes from .app bundle..."
+find "$APP" -name ".DS_Store" -delete 2>/dev/null || true
+find "$APP" -name "Icon?" -delete 2>/dev/null || true
+# -r: 재귀적으로 모든 파일의 모든 xattr 제거
+xattr -cr "$APP" 2>/dev/null || true
+# 혹시 남은 놈이 있는지 최종 확인해서 하나씩 강제 제거
+find "$APP" -print0 | xargs -0 -I {} sh -c 'xattr -l "$1" 2>/dev/null | awk -F: "{print \$1}" | while read k; do [ -n "$k" ] && xattr -d "$k" "$1" 2>/dev/null; done' _ {} 2>/dev/null || true
+ok "Bundle cleaned"
+
+# ---------- 7. 직접 ad-hoc 서명 ----------
+log "Manually signing with ad-hoc identity..."
+ENTITLEMENTS="MeetingCrew/Resources/MeetingCrew.entitlements"
+[ -f "$ENTITLEMENTS" ] || die "entitlements 파일을 찾지 못했습니다: $ENTITLEMENTS"
+
+# --deep: 번들 안의 모든 dylib/프레임워크도 서명
+# --force: 기존 서명 덮어쓰기
+# --sign -: ad-hoc (개발팀 없이)
+if ! codesign --force --deep --sign - \
+     --timestamp=none \
+     --entitlements "$ENTITLEMENTS" \
+     "$APP" 2>&1 | tee -a "$BUILD_LOG"; then
+  die "codesign 실패. 로그 확인: $BUILD_LOG"
+fi
+
+# 서명 검증
+if codesign --verify --verbose=2 "$APP" 2>&1 | tee -a "$BUILD_LOG"; then
+  ok "Signed and verified"
+else
+  warn "서명은 됐지만 검증에서 경고가 났습니다 (로컬 실행엔 영향 없을 수 있음)"
 fi
 
 if [ "$BUILD_ONLY" -eq 1 ]; then
