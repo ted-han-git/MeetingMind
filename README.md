@@ -67,28 +67,44 @@ MeetingCrew/
 - macOS 14 이상 · Xcode 15 이상
 - Anthropic Console에서 발급한 Claude API Key
 
-### 0. 원클릭 셋업 (권장)
+### 0. 초보자용 — 터미널 한 줄로 실행 (Xcode GUI 불필요)
 
-clone 한 뒤 한 번만 실행하면 서명 자동 감지 + iOS/macOS 스모크 빌드까지 끝납니다.
+clone 하고 **딱 한 줄**이면 앱이 뜹니다. Xcode를 켤 필요도 없어요.
 
+**🅰️ Mac 앱으로 바로 실행:**
 ```bash
 git clone <repo>
 cd MeetingMind
+./scripts/run-mac.sh
+```
+
+**🅱️ iPhone Simulator에서 실행:**
+```bash
+./scripts/run-ios.sh               # 기본 기기 자동 선택
+./scripts/run-ios.sh "iPhone 16"   # 특정 기기 지정
+```
+
+각 스크립트가 하는 일:
+- `run-mac.sh`: ad-hoc 서명으로 빌드 → 완성된 `.app` 번들 탐색 → `open`으로 실행
+- `run-ios.sh`: 사용 가능한 iPhone 시뮬레이터 자동 탐색 → 부팅 → 빌드 → 설치 → 실행
+
+### 1. 환경 사전 점검 (최초 1회)
+
+혹시 빌드가 안 되면 아래 스크립트로 원인을 먼저 찾으세요:
+
+```bash
 ./scripts/setup-mac.sh
 ```
 
-스크립트가 하는 일:
+하는 일:
 1. Xcode Command Line Tools 확인
 2. 키체인에서 Development Team 자동 감지 → `.local/LocalSigning.xcconfig`에 저장
 3. `xcodebuild -list`로 프로젝트 구조 검증
-4. iOS Simulator 타겟 Debug 빌드 (code signing 비활성화)
-5. My Mac 타겟 Debug 빌드
+4. iOS Simulator + macOS 양쪽 스모크 빌드
 
-완료 후 `open MeetingCrew.xcodeproj` 로 Xcode에 열고 ⌘R 누르면 됩니다.
+### 2. Xcode GUI로 작업하고 싶다면
 
-### 1. (또는) 바로 열어서 실행
-
-셋업 스크립트 없이 그냥 열어도 됩니다. 저장소에 `MeetingCrew.xcodeproj`가 포함되어 있습니다.
+저장소에 `MeetingCrew.xcodeproj`가 포함되어 있으니 그냥 열어도 됩니다.
 
 ```bash
 git clone <repo>
