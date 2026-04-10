@@ -67,35 +67,41 @@ MeetingCrew/
 - macOS 14 이상 · Xcode 15 이상
 - Anthropic Console에서 발급한 Claude API Key
 
-### 1. Xcode 프로젝트 생성
+### 1. 바로 열어서 실행
 
-이 저장소에는 `.xcodeproj` 파일이 포함되지 않습니다 (XcodeGen으로 관리).
-[XcodeGen](https://github.com/yonaskolb/XcodeGen)으로 한 번만 생성해주세요:
+이 저장소에는 `MeetingCrew.xcodeproj`가 **이미 포함**되어 있습니다. 그냥 여세요:
 
 ```bash
-brew install xcodegen
+git clone <repo>
 cd MeetingMind
-xcodegen generate
 open MeetingCrew.xcodeproj
 ```
 
-### 2. (대안) 수동으로 Xcode 프로젝트 만들기
+Xcode에서 상단의 실행 타겟을:
+- **iPhone/iPad Simulator**: iOS 17+ 기기 선택 → ⌘R
+- **My Mac**: macOS 14+ → ⌘R
 
-XcodeGen을 쓰지 않으려면:
+단일 타겟이 iOS · iOS Simulator · macOS 모두 지원하도록 설정되어 있습니다
+(`SDKROOT = auto`, `SUPPORTED_PLATFORMS = iphoneos iphonesimulator macosx`).
 
-1. Xcode → File → New → Project → **Multiplatform → App** 선택
-2. Product Name: `MeetingCrew`, Interface: `SwiftUI`, Language: `Swift`
-3. 생성 위치: `MeetingMind/` (이 저장소 루트)
-4. 생성된 기본 `ContentView.swift`, `MeetingCrewApp.swift` 삭제
-5. Finder에서 `MeetingCrew/` 폴더 (`App`, `Agents`, `Views`, `Services`, `Models`) 전체를 Xcode 좌측 Navigator로 드래그 → **Create groups** 선택, `MeetingCrew` 타겟 체크
-6. `MeetingCrew/Resources/Info.plist` 사용하도록 Build Settings 에서 `Info.plist File` 경로 설정
-7. Build Settings → `Swift Language Version` 5.9
-8. Signing & Capabilities에서:
-   - **macOS**: App Sandbox → Audio Input ✓, Outgoing Connections (Client) ✓
-   - **iOS**: 팀 설정
-9. Build & Run (⌘R)
+### 2. (옵션) 프로젝트 재생성
 
-### 3. 첫 실행
+소스 파일을 추가/삭제했을 때는 `scripts/generate_xcodeproj.rb`를 다시 실행하세요:
+
+```bash
+gem install xcodeproj  # 최초 1회
+ruby scripts/generate_xcodeproj.rb
+```
+
+스크립트가 `MeetingCrew/` 아래의 모든 `.swift` 파일과 Assets를 자동으로
+타겟에 추가한 새 `MeetingCrew.xcodeproj`를 만들어줍니다.
+
+### 3. 서명 (실기기 배포 시)
+
+실기기에 배포하려면 Xcode → `MeetingCrew` 타겟 → Signing & Capabilities에서
+본인의 Development Team을 선택하세요. 시뮬레이터·My Mac 실행에는 필요 없습니다.
+
+### 4. 첫 실행
 
 1. 앱 실행 → 우측 상단 ⚙️ 설정 아이콘 탭
 2. **Claude API Key** 입력 (`sk-ant-...`)
