@@ -40,33 +40,45 @@ import json, sys
 data = json.loads(sys.argv[1])
 requested = sys.argv[2].strip()
 
-candidates = []
+candidates = []  # (runtime, name, udid, state)
 for runtime, devices in data.get("devices", {}).items():
     if "iOS" not in runtime:
         continue
     for d in devices:
         if d.get("isAvailable", False) and "iPhone" in d.get("name", ""):
-            candidates.append((runtime, d["name"], d["udid"]))
+            candidates.append((runtime, d["name"], d["udid"], d.get("state", "")))
 
 if not candidates:
     sys.exit(1)
 
 # 특정 기기 요청이 있으면 그것 우선
 if requested:
-    for r, n, u in candidates:
+    for r, n, u, s in candidates:
         if n == requested:
             print(u); print(n)
             sys.exit(0)
 
-# 아니면 iPhone 16/15/14 순으로 선호
-for pref in ("iPhone 16 Pro", "iPhone 16", "iPhone 15 Pro", "iPhone 15", "iPhone 14"):
-    for r, n, u in candidates:
+# 이미 Booted된 시뮬레이터가 있으면 그것 최우선
+for r, n, u, s in candidates:
+    if s == "Booted":
+        print(u); print(n)
+        sys.exit(0)
+
+# 아니면 iPhone 18/17/16/15/14 순으로 선호 (최신 기종 우선)
+for pref in (
+    "iPhone 18 Pro Max", "iPhone 18 Pro", "iPhone 18 Plus", "iPhone 18",
+    "iPhone 17 Pro Max", "iPhone 17 Pro", "iPhone 17 Plus", "iPhone 17",
+    "iPhone 16 Pro Max", "iPhone 16 Pro", "iPhone 16 Plus", "iPhone 16",
+    "iPhone 15 Pro Max", "iPhone 15 Pro", "iPhone 15 Plus", "iPhone 15",
+    "iPhone 14 Pro Max", "iPhone 14 Pro", "iPhone 14 Plus", "iPhone 14",
+):
+    for r, n, u, s in candidates:
         if n == pref:
             print(u); print(n)
             sys.exit(0)
 
 # 그래도 없으면 첫 번째 것
-r, n, u = candidates[0]
+r, n, u, s = candidates[0]
 print(u); print(n)
 PY
 }
